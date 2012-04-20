@@ -1,0 +1,482 @@
+diff --git orig/.gitignore passenger/.gitignore
+new file mode 100644
+index 0000000..3520a6c
+--- /dev/null
++++ passenger/.gitignore
+@@ -0,0 +1,43 @@
++*~
++.*.swp
++
++.pc/
++
++build
++build-arch
++build-dbg
++
++config.guess
++config.status.extras
++config.status.full
++config.status.light
++config.status.naxsi
++config.status.passenger
++config.sub
++
++debian/files
++
++debian/build-extras/
++debian/build-full/
++debian/build-light/
++debian/build-naxsi/
++debian/build-passenger/
++
++debian/nginx/
++debian/nginx-common/
++debian/nginx-doc/
++debian/nginx-extras/
++debian/nginx-full/
++debian/nginx-light/
++debian/nginx-naxsi/
++debian/nginx-passenger/
++
++debian/nginx-extras-dbg/
++debian/nginx-full-dbg/
++debian/nginx-light-dbg/
++debian/nginx-naxsi-dbg/
++debian/nginx-passenger-dbg/
++
++debian/nginx*.debhelper*
++debian/nginx*.substvars
++
+diff --git orig/README.md passenger/README.md
+new file mode 100644
+index 0000000..4529597
+--- /dev/null
++++ passenger/README.md
+@@ -0,0 +1,26 @@
++## nginx-passenger-debian ##
++
++This repository contains a version of nginx patched to include support for Phusion Passenger that can be built as a Debian package.
++
++### Build Instructions ###
++
++Make sure that Ruby is correctly set up and install the `passenger` gem like this:
++
++    sudo gem install passenger
++
++Next, check out this repository and build its Debian packages using:
++
++    dpkg-buildpackage -b -rfakeroot
++
++In case, mandatory build dependencies are missing, install these using:
++
++    apt-get build-dep nginx
++
++Install the resulting `nginx-passenger` and `nginx-common` .deb packages located in the previous directory and you are done:
++
++    sudo dpkg -i ../nginx-passenger-1*.deb ../nginx-common*.deb
++
++### General Information ###
++
++Documentation is available at http://nginx.org
++
+diff --git orig/debian/changelog passenger/debian/changelog
+index 4979159..8a96259 100644
+--- orig/debian/changelog
++++ passenger/debian/changelog
+@@ -1,3 +1,9 @@
++nginx (1.1.19-1~passenger-1) unstable; urgency=low
++
++  * Add support of Phusion Passenger
++
++ -- Laurent Baysse <lol.b@free.fr>  Fri, 20 Apr 2012 00:00:58 +0200
++
+ nginx (1.1.19-1) unstable; urgency=high
+ 
+   [Cyril Lavier]
+diff --git orig/debian/conf/sites-available/default passenger/debian/conf/sites-available/default
+index 1732ada..faaa56e 100644
+--- orig/debian/conf/sites-available/default
++++ passenger/debian/conf/sites-available/default
+@@ -67,6 +67,8 @@ server {
+ 	#	fastcgi_pass 127.0.0.1:9000;
+ 	#	# With php5-fpm:
+ 	#	fastcgi_pass unix:/var/run/php5-fpm.sock;
++	#
++	#	# With both:
+ 	#	fastcgi_index index.php;
+ 	#	include fastcgi_params;
+ 	#}
+diff --git orig/debian/control passenger/debian/control
+index 5581f04..8e046aa 100644
+--- orig/debian/control
++++ passenger/debian/control
+@@ -74,7 +74,7 @@ Package: nginx-full
+ Architecture: any
+ Depends: nginx-common (= ${source:Version}), ${misc:Depends}, ${shlibs:Depends}
+ Provides: httpd, nginx
+-Conflicts: nginx-extras, nginx-light, nginx-naxsi
++Conflicts: nginx-extras, nginx-light, nginx-naxsi, nginx-passenger
+ Description: nginx web server with full set of core modules
+  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
+  the open-source community. This server can be used as standalone HTTP server
+@@ -95,14 +95,15 @@ Description: nginx web server with full set of core modules
+  Mail Modules:
+    Mail Core, IMAP, POP3, SMTP, SSL
+  Third Party Modules:
+-   Echo, Upstream Fair Queue, DAV Ext
++   Auth PAM, Echo, Upstream Fair Queue, DAV Ext
+ 
+ Package: nginx-full-dbg
+ Architecture: any
+ Section: debug
+ Priority: extra
+ Depends: nginx-full (= ${binary:Version}), ${misc:Depends}
+-Conflicts: nginx-extras-dbg, nginx-light-dbg, nginx-naxsi-dbg
++Conflicts: nginx-extras-dbg, nginx-light-dbg, nginx-naxsi-dbg,
++ nginx-passenger-dbg
+ Description: Debugging symbols for nginx (full)
+  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
+  the open-source community. This server can be used as standalone HTTP server
+@@ -117,7 +118,7 @@ Architecture: any
+ Priority: extra
+ Depends: nginx-common (= ${source:Version}), ${misc:Depends}, ${shlibs:Depends}
+ Provides: httpd, nginx
+-Conflicts: nginx-extras, nginx-full, nginx-naxsi
++Conflicts: nginx-extras, nginx-full, nginx-naxsi, nginx-passenger
+ Description: nginx web server with minimal set of core modules
+  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
+  the open-source community. This server can be used as standalone HTTP server
+@@ -143,7 +144,8 @@ Architecture: any
+ Section: debug
+ Priority: extra
+ Depends: nginx-light (= ${binary:Version}), ${misc:Depends}
+-Conflicts: nginx-extras-dbg, nginx-full-dbg, nginx-naxsi-dbg
++Conflicts: nginx-extras-dbg, nginx-full-dbg, nginx-naxsi-dbg,
++ nginx-passenger-dbg
+ Description: Debugging symbols for nginx (light)
+  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
+  the open-source community. This server can be used as standalone HTTP server
+@@ -162,7 +164,7 @@ Depends: nginx-common (= ${source:Version}),
+          ${perl:Depends},
+          ${shlibs:Depends}
+ Provides: httpd, nginx
+-Conflicts: nginx-full, nginx-light, nginx-naxsi
++Conflicts: nginx-full, nginx-light, nginx-naxsi, nginx-passenger
+ Description: nginx web server with full set of core modules and extras
+  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
+  the open-source community. This server can be used as standalone HTTP server
+@@ -187,14 +189,15 @@ Description: nginx web server with full set of core modules and extras
+  Third Party Modules:
+    Echo, Embedded Lua, http push, Nginx Development Kit, Upload module,
+    Upload Progress, HttpHeadersMore, Upstream Fair Queue, Chunkin, Auth PAM,
+-   DAV Ext
++   DAV Ext, Phusion Passenger
+ 
+ Package: nginx-extras-dbg
+ Architecture: any
+ Section: debug
+ Priority: extra
+ Depends: nginx-extras (= ${binary:Version}), ${misc:Depends}
+-Conflicts: nginx-full-dbg, nginx-light-dbg, nginx-naxsi-dbg
++Conflicts: nginx-full-dbg, nginx-light-dbg, nginx-naxsi-dbg,
++ nginx-passenger-dbg
+ Description: Debugging symbols for nginx (extras)
+  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
+  the open-source community. This server can be used as standalone HTTP server
+@@ -210,7 +213,7 @@ Architecture: any
+ Priority: extra
+ Depends: nginx-common (= ${source:Version}), ${misc:Depends}, ${shlibs:Depends}
+ Provides: httpd, nginx
+-Conflicts: nginx-extras, nginx-full, nginx-light
++Conflicts: nginx-extras, nginx-full, nginx-light, nginx-passenger
+ Description: nginx web server with naxsi 0.44 included
+  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
+  the open-source community. This server can be used as standalone HTTP server
+@@ -237,7 +240,8 @@ Architecture: any
+ Section: debug
+ Priority: extra
+ Depends: nginx-naxsi (= ${binary:Version}), ${misc:Depends}
+-Conflicts: nginx-extras-dbg, nginx-full-dbg, nginx-light-dbg
++Conflicts: nginx-extras-dbg, nginx-full-dbg, nginx-light-dbg,
++ nginx-passenger-dbg
+ Description: Debugging symbols for nginx (naxsi)
+  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
+  the open-source community. This server can be used as standalone HTTP server
+@@ -247,3 +251,46 @@ Description: Debugging symbols for nginx (naxsi)
+  This package provides debugging symbols for nginx-naxsi, to assist in
+  debugging issues that you may find. It should not be required for normal
+  operation.
++
++Package: nginx-passenger
++Architecture: any
++Depends: nginx-common (= ${source:Version}), ${misc:Depends}, ${shlibs:Depends}
++Provides: httpd, nginx
++Conflicts: nginx-extras, nginx-full, nginx-light, nginx-naxsi
++Description: nginx web server with full set of core modules and Phusion Passenger
++ Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
++ the open-source community. This server can be used as standalone HTTP server
++ and as a reverse proxy server before some Apache or another big server to
++ reduce load to backend servers by many concurrent HTTP-sessions.
++ .
++ It can also act as a POP3/IMAP mail proxy with SSL and TLS SNI support. This
++ package has the standard set of modules enabled.
++ .
++ MODULES INCLUDED:
++ Standard HTTP Modules:
++   Core, Access, Auth Basic, Auto Index, Browser, Charset, Empty GIF, FastCGI,
++   Geo, Gzip, Headers, Index, Limit Requests, Limit Zone, Log, Map, Memcached,
++   Proxy, Referer, Rewrite, SCGI, Split Clients, SSI, Upstream, User ID, UWSGI
++ Optional HTTP Modules:
++   Debug, WebDAV, GeoIP, Gzip Precompression, Image Filter, RealIP, Stub Status,
++   XSLT, IPv6, Addition
++ Mail Modules:
++   Mail Core, POP3, IMAP, SMTP, SSL
++ Third Party Modules:
++   Auth PAM, Echo, Upstream Fair Queue, Phusion Passenger
++
++Package: nginx-passenger-dbg
++Architecture: any
++Section: debug
++Priority: extra
++Depends: nginx-passenger (= ${binary:Version}), ${misc:Depends}
++Conflicts: nginx-extras-dbg, nginx-full-dbg, nginx-light-dbg, nginx-naxsi-dbg
++Description: Debugging symbols for nginx (passenger)
++ Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
++ the open-source community. This server can be used as standalone HTTP server
++ and as a reverse proxy server before some Apache or another big server to
++ reduce load to backend servers by many concurrent HTTP-sessions.
++ .
++ This package provides debugging symbols for nginx-passenger, to assist in
++ debugging issues that you may find. It should not be required for normal
++ operation.
+diff --git orig/debian/nginx-doc.docs passenger/debian/nginx-doc.docs
+index 448972c..debb4dc 100644
+--- orig/debian/nginx-doc.docs
++++ passenger/debian/nginx-doc.docs
+@@ -1,3 +1,3 @@
+-README
++README.md
+ debian/NEWS.Debian
+ debian/help/docs/*
+diff --git orig/debian/nginx-passenger.dirs passenger/debian/nginx-passenger.dirs
+new file mode 100644
+index 0000000..236670a
+--- /dev/null
++++ passenger/debian/nginx-passenger.dirs
+@@ -0,0 +1 @@
++usr/sbin
+diff --git orig/debian/nginx-passenger.install passenger/debian/nginx-passenger.install
+new file mode 100644
+index 0000000..2fd0911
+--- /dev/null
++++ passenger/debian/nginx-passenger.install
+@@ -0,0 +1 @@
++debian/build-passenger/objs/nginx usr/sbin
+diff --git orig/debian/nginx-passenger.postinst passenger/debian/nginx-passenger.postinst
+new file mode 100644
+index 0000000..0bef8e1
+--- /dev/null
++++ passenger/debian/nginx-passenger.postinst
+@@ -0,0 +1,41 @@
++#!/bin/sh
++set -e
++
++case "$1" in
++  configure)
++    if [ -z $2 ] && [ ! -e /etc/nginx/sites-enabled/default ]; then
++      ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
++    fi
++    ;;
++
++  abort-upgrade|abort-remove|abort-deconfigure)
++    ;;
++
++  *)
++    echo "postinst called with unknown argument \`$1'" >&2
++    exit 1
++    ;;
++esac
++
++if [ -x /etc/init.d/nginx ]; then
++  if [ -f /var/run/nginx.pid ] && pidof /usr/sbin/nginx >/dev/null; then
++    NGX_PID=`cat /var/run/nginx.pid`
++    if kill -s USR2 $NGX_PID 2>/dev/null; then
++      while [ ! -f /var/run/nginx.pid.oldbin ]; do
++        cnt=`expr $cnt + 1`
++        if [ $cnt -gt 10 ]; then
++          kill -s KILL $NGX_PID
++          invoke-rc.d nginx start
++          exit 0
++        fi
++        sleep 1
++      done
++      NGX_OLD_PID=`cat /var/run/nginx.pid.oldbin`
++      kill -s QUIT $NGX_OLD_PID
++    fi
++  fi
++fi
++
++#DEBHELPER#
++
++exit 0
+diff --git orig/debian/nginx-passenger.postrm passenger/debian/nginx-passenger.postrm
+new file mode 100644
+index 0000000..ce81bd5
+--- /dev/null
++++ passenger/debian/nginx-passenger.postrm
+@@ -0,0 +1,20 @@
++#!/bin/sh
++
++set -e
++
++case "$1" in
++  purge)
++    rm -rf /var/lib/nginx /var/log/nginx /etc/nginx
++    ;;
++
++  remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
++    ;;
++
++  *)
++    echo "postrm called with unknown argument \`$1'" >&2
++    exit 1
++esac
++
++#DEBHELPER#
++
++exit 0
+diff --git orig/debian/nginx-passenger.prerm passenger/debian/nginx-passenger.prerm
+new file mode 100644
+index 0000000..c79cfb8
+--- /dev/null
++++ passenger/debian/nginx-passenger.prerm
+@@ -0,0 +1,26 @@
++#!/bin/sh
++set -e
++
++case "$1" in
++  remove|remove-in-favour|deconfigure|deconfigure-in-favour)
++    if [ -x /etc/init.d/nginx ]; then
++      if [ -x /usr/sbin/invoke-rc.d ]; then
++        invoke-rc.d nginx stop
++      else   
++        /etc/init.d/nginx stop
++      fi
++    fi
++    ;;
++
++  upgrade|failed-upgrade)
++    ;;
++
++  *)
++    echo "prerm called with unknown argument \`$1'" >&2
++    exit 1
++    ;;
++esac
++
++#DEBHELPER#
++
++exit 0
+diff --git orig/debian/rules passenger/debian/rules
+index 1c2a2c4..50d5c89 100755
+--- orig/debian/rules
++++ passenger/debian/rules
+@@ -8,14 +8,16 @@ LDFLAGS = `dpkg-buildflags --get LDFLAGS`
+ # (src/http/modules/perl/Makefile.PL).
+ export CFLAGS LDFLAGS
+ 
+-FLAVOURS:=full light extras naxsi
++FLAVOURS:=full light extras naxsi passenger
+ 
+ BUILDDIR_full = $(CURDIR)/debian/build-full
+ BUILDDIR_light = $(CURDIR)/debian/build-light
+ BUILDDIR_extras = $(CURDIR)/debian/build-extras
+ BUILDDIR_naxsi = $(CURDIR)/debian/build-naxsi
++BUILDDIR_passenger = $(CURDIR)/debian/build-passenger
+ MODULESDIR = $(CURDIR)/debian/modules
+ BASEDIR = $(CURDIR)
++PASSENGER_GEM_DIR = $(shell echo "`passenger-config --root`")
+ 
+ DEB_BUILD_ARCH ?=$(shell dpkg-architecture -qDEB_BUILD_ARCH)
+ ifeq ($(DEB_BUILD_ARCH),sparc)
+@@ -87,7 +89,7 @@ config.status.full: config.env.full config.sub config.guess
+ 	    --add-module=$(MODULESDIR)/nginx-echo \
+ 	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
+ 	    --add-module=$(MODULESDIR)/nginx-dav-ext-module \
+-            $(CONFIGURE_OPTS) >$@
++	    $(CONFIGURE_OPTS) >$@
+ 	touch $@
+ 
+ config.status.light: config.env.light config.sub config.guess
+@@ -117,7 +119,7 @@ config.status.light: config.env.light config.sub config.guess
+ 	    --without-http_userid_module \
+ 	    --without-http_uwsgi_module \
+ 	    --add-module=$(MODULESDIR)/nginx-echo \
+-            $(CONFIGURE_OPTS) >$@
++	    $(CONFIGURE_OPTS) >$@
+ 	touch $@
+ 
+ config.status.extras: config.env.extras config.sub config.guess
+@@ -165,7 +167,8 @@ config.status.extras: config.env.extras config.sub config.guess
+ 	    --add-module=$(MODULESDIR)/nginx-upload-progress \
+ 	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
+ 	    --add-module=$(MODULESDIR)/nginx-dav-ext-module \
+-            $(CONFIGURE_OPTS) >$@
++	    --add-module=$(PASSENGER_GEM_DIR)/ext/nginx \
++	    $(CONFIGURE_OPTS) >$@
+ 	touch $@
+ 
+ config.status.naxsi: config.env.naxsi config.sub config.guess
+@@ -194,6 +197,42 @@ config.status.naxsi: config.env.naxsi config.sub config.guess
+ 	    $(CONFIGURE_OPTS) >$@
+ 	touch $@
+ 
++config.status.passenger: config.env.passenger config.sub config.guess
++	cd $(BUILDDIR_passenger) && CFLAGS="$(CFLAGS)" CORE_LINK="$(LDFLAGS)" ./configure  \
++	    --prefix=/etc/nginx \
++	    --conf-path=/etc/nginx/nginx.conf \
++	    --error-log-path=/var/log/nginx/error.log \
++	    --http-client-body-temp-path=/var/lib/nginx/body \
++	    --http-fastcgi-temp-path=/var/lib/nginx/fastcgi \
++	    --http-log-path=/var/log/nginx/access.log \
++	    --http-proxy-temp-path=/var/lib/nginx/proxy \
++	    --http-scgi-temp-path=/var/lib/nginx/scgi \
++	    --http-uwsgi-temp-path=/var/lib/nginx/uwsgi \
++	    --lock-path=/var/lock/nginx.lock \
++	    --pid-path=/var/run/nginx.pid \
++	    --with-debug \
++	    --with-http_addition_module \
++	    --with-http_dav_module \
++	    --with-http_geoip_module \
++	    --with-http_gzip_static_module \
++	    --with-http_image_filter_module \
++	    --with-http_realip_module \
++	    --with-http_stub_status_module \
++	    --with-http_ssl_module \
++	    --with-http_sub_module \
++	    --with-http_xslt_module \
++	    --with-ipv6 \
++	    --with-sha1=/usr/include/openssl \
++	    --with-md5=/usr/include/openssl \
++	    --with-mail \
++	    --with-mail_ssl_module \
++	    --add-module=$(MODULESDIR)/nginx-auth-pam \
++	    --add-module=$(MODULESDIR)/nginx-echo \
++	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
++	    --add-module=$(MODULESDIR)/nginx-dav-ext-module \
++	    --add-module=$(PASSENGER_GEM_DIR)/ext/nginx \
++	    $(CONFIGURE_OPTS) >$@
++
+ config.status.%:
+ 	echo "configuration for flavour $* not yet defined."
+ 
+@@ -227,8 +266,8 @@ clean:
+ 	rm -f config.sub config.guess
+ 	dh_clean
+ 	rm -rf $(CURDIR)/debian/build-*
++
+ mime-types:
+-	
+ 
+ install: mime-types
+ 	dh_testdir
