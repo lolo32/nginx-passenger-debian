@@ -41,3 +41,4 @@ debian/nginx-passenger-dbg/
 debian/nginx*.debhelper*
 debian/nginx*.substvars
 
+debian/passenger.conf

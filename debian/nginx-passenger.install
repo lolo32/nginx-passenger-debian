@@ -1,1 +1,3 @@
 debian/build-passenger/objs/nginx usr/sbin
+debian/build-passenger/passenger etc/nginx/sites-available
+debian/passenger.conf etc/nginx/conf.d

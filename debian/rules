@@ -122,7 +122,7 @@ config.status.light: config.env.light config.sub config.guess
 	    $(CONFIGURE_OPTS) >$@
 	touch $@
 
-config.status.extras: config.env.extras config.sub config.guess
+config.status.extras: config.env.extras config.sub config.guess debian/passenger.conf
 	cd $(BUILDDIR_extras) && CFLAGS="$(CFLAGS)" CORE_LINK="$(LDFLAGS)" ./configure  \
 	    --prefix=/etc/nginx \
 	    --conf-path=/etc/nginx/nginx.conf \
@@ -169,6 +169,7 @@ config.status.extras: config.env.extras config.sub config.guess
 	    --add-module=$(MODULESDIR)/nginx-dav-ext-module \
 	    --add-module=$(PASSENGER_GEM_DIR)/ext/nginx \
 	    $(CONFIGURE_OPTS) >$@
+	cp debian/passenger.conf.site-available $(BUILDDIR_extras)/passenger
 	touch $@
 
 config.status.naxsi: config.env.naxsi config.sub config.guess
@@ -197,7 +198,7 @@ config.status.naxsi: config.env.naxsi config.sub config.guess
 	    $(CONFIGURE_OPTS) >$@
 	touch $@
 
-config.status.passenger: config.env.passenger config.sub config.guess
+config.status.passenger: config.env.passenger config.sub config.guess debian/passenger.conf
 	cd $(BUILDDIR_passenger) && CFLAGS="$(CFLAGS)" CORE_LINK="$(LDFLAGS)" ./configure  \
 	    --prefix=/etc/nginx \
 	    --conf-path=/etc/nginx/nginx.conf \
@@ -232,9 +233,15 @@ config.status.passenger: config.env.passenger config.sub config.guess
 	    --add-module=$(MODULESDIR)/nginx-dav-ext-module \
 	    --add-module=$(PASSENGER_GEM_DIR)/ext/nginx \
 	    $(CONFIGURE_OPTS) >$@
+	cp debian/passenger.conf.site-available $(BUILDDIR_passenger)/passenger
+	touch $@
 
 config.status.%:
 	echo "configuration for flavour $* not yet defined."
+
+debian/passenger.conf:
+	echo "passenger_root $(PASSENGER_GEM_DIR)" > $@
+	echo "passenger_ruby /usr/bin/ruby" >> $@
 
 build-arch.%: config.status.%
 	dh_testdir
@@ -266,6 +273,7 @@ clean:
 	rm -f config.sub config.guess
 	dh_clean
 	rm -rf $(CURDIR)/debian/build-*
+	rm -f debian/passenger.conf
 
 mime-types:
 

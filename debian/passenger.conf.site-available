@@ -1,0 +1,12 @@
+server {
+
+	server_name DOMAIN_NAME;		# change to your domain name
+
+	root /var/www/RAILS/public;		# <--- be sure to point to 'public'!
+
+	# Enable Phusion Passenger support for this VHost
+	passenger_enabled on;
+
+	# Enable to use a non-production rails environment
+	#rails_env development;
+}
