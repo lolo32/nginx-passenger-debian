@@ -1,9 +1,9 @@
 diff --git orig/.gitignore passenger/.gitignore
 new file mode 100644
-index 0000000..3520a6c
+index 0000000..f2273b6
 --- /dev/null
 +++ passenger/.gitignore
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,44 @@
 +*~
 +.*.swp
 +
@@ -47,6 +47,7 @@ index 0000000..3520a6c
 +debian/nginx*.debhelper*
 +debian/nginx*.substvars
 +
++debian/passenger.conf
 diff --git orig/README.md passenger/README.md
 new file mode 100644
 index 0000000..4529597
@@ -93,6 +94,26 @@ index 4979159..8a96259 100644
  nginx (1.1.19-1) unstable; urgency=high
  
    [Cyril Lavier]
+diff --git orig/debian/conf/nginx.conf passenger/debian/conf/nginx.conf
+index c027ac5..6688b05 100644
+--- orig/debian/conf/nginx.conf
++++ passenger/debian/conf/nginx.conf
+@@ -56,15 +56,6 @@ http {
+ 	#include /etc/nginx/naxsi_core.rules;
+ 
+ 	##
+-	# nginx-passenger config
+-	##
+-	# Uncomment it if you installed nginx-passenger
+-	##
+-	
+-	#passenger_root /usr;
+-	#passenger_ruby /usr/bin/ruby;
+-
+-	##
+ 	# Virtual Host Configs
+ 	##
+ 
 diff --git orig/debian/conf/sites-available/default passenger/debian/conf/sites-available/default
 index 1732ada..faaa56e 100644
 --- orig/debian/conf/sites-available/default
@@ -258,6 +279,16 @@ index 448972c..debb4dc 100644
 +README.md
  debian/NEWS.Debian
  debian/help/docs/*
+diff --git orig/debian/nginx-extras.install passenger/debian/nginx-extras.install
+index 7f56da7..92dc60c 100644
+--- orig/debian/nginx-extras.install
++++ passenger/debian/nginx-extras.install
+@@ -2,3 +2,5 @@ debian/build-extras/objs/nginx usr/sbin
+ debian/build-extras/objs/src/http/modules/perl/blib/arch/auto/nginx/nginx.bs usr/lib/perl5/auto/nginx
+ debian/build-extras/objs/src/http/modules/perl/blib/arch/auto/nginx/nginx.so usr/lib/perl5/auto/nginx
+ debian/build-extras/objs/src/http/modules/perl/blib/lib/nginx.pm usr/lib/perl5
++debian/build-extras/passenger etc/nginx/sites-available
++debian/passenger.conf etc/nginx/conf.d
 diff --git orig/debian/nginx-passenger.dirs passenger/debian/nginx-passenger.dirs
 new file mode 100644
 index 0000000..236670a
@@ -267,11 +298,13 @@ index 0000000..236670a
 +usr/sbin
 diff --git orig/debian/nginx-passenger.install passenger/debian/nginx-passenger.install
 new file mode 100644
-index 0000000..2fd0911
+index 0000000..fffbda7
 --- /dev/null
 +++ passenger/debian/nginx-passenger.install
-@@ -0,0 +1 @@
+@@ -0,0 +1,3 @@
 +debian/build-passenger/objs/nginx usr/sbin
++debian/build-passenger/passenger etc/nginx/sites-available
++debian/passenger.conf etc/nginx/conf.d
 diff --git orig/debian/nginx-passenger.postinst passenger/debian/nginx-passenger.postinst
 new file mode 100644
 index 0000000..0bef8e1
@@ -377,8 +410,26 @@ index 0000000..c79cfb8
 +#DEBHELPER#
 +
 +exit 0
+diff --git orig/debian/passenger.conf.site-available passenger/debian/passenger.conf.site-available
+new file mode 100644
+index 0000000..13d72cc
+--- /dev/null
++++ passenger/debian/passenger.conf.site-available
+@@ -0,0 +1,12 @@
++server {
++
++	server_name DOMAIN_NAME;		# change to your domain name
++
++	root /var/www/RAILS/public;		# <--- be sure to point to 'public'!
++
++	# Enable Phusion Passenger support for this VHost
++	passenger_enabled on;
++
++	# Enable to use a non-production rails environment
++	#rails_env development;
++}
 diff --git orig/debian/rules passenger/debian/rules
-index 1c2a2c4..50d5c89 100755
+index 1c2a2c4..cf5bfe0 100755
 --- orig/debian/rules
 +++ passenger/debian/rules
 @@ -8,14 +8,16 @@ LDFLAGS = `dpkg-buildflags --get LDFLAGS`
@@ -408,7 +459,7 @@ index 1c2a2c4..50d5c89 100755
  	touch $@
  
  config.status.light: config.env.light config.sub config.guess
-@@ -117,7 +119,7 @@ config.status.light: config.env.light config.sub config.guess
+@@ -117,10 +119,10 @@ config.status.light: config.env.light config.sub config.guess
  	    --without-http_userid_module \
  	    --without-http_uwsgi_module \
  	    --add-module=$(MODULESDIR)/nginx-echo \
@@ -416,22 +467,27 @@ index 1c2a2c4..50d5c89 100755
 +	    $(CONFIGURE_OPTS) >$@
  	touch $@
  
- config.status.extras: config.env.extras config.sub config.guess
-@@ -165,7 +167,8 @@ config.status.extras: config.env.extras config.sub config.guess
+-config.status.extras: config.env.extras config.sub config.guess
++config.status.extras: config.env.extras config.sub config.guess debian/passenger.conf
+ 	cd $(BUILDDIR_extras) && CFLAGS="$(CFLAGS)" CORE_LINK="$(LDFLAGS)" ./configure  \
+ 	    --prefix=/etc/nginx \
+ 	    --conf-path=/etc/nginx/nginx.conf \
+@@ -165,7 +167,9 @@ config.status.extras: config.env.extras config.sub config.guess
  	    --add-module=$(MODULESDIR)/nginx-upload-progress \
  	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
  	    --add-module=$(MODULESDIR)/nginx-dav-ext-module \
 -            $(CONFIGURE_OPTS) >$@
 +	    --add-module=$(PASSENGER_GEM_DIR)/ext/nginx \
 +	    $(CONFIGURE_OPTS) >$@
++	cp debian/passenger.conf.site-available $(BUILDDIR_extras)/passenger
  	touch $@
  
  config.status.naxsi: config.env.naxsi config.sub config.guess
-@@ -194,6 +197,42 @@ config.status.naxsi: config.env.naxsi config.sub config.guess
+@@ -194,9 +198,51 @@ config.status.naxsi: config.env.naxsi config.sub config.guess
  	    $(CONFIGURE_OPTS) >$@
  	touch $@
  
-+config.status.passenger: config.env.passenger config.sub config.guess
++config.status.passenger: config.env.passenger config.sub config.guess debian/passenger.conf
 +	cd $(BUILDDIR_passenger) && CFLAGS="$(CFLAGS)" CORE_LINK="$(LDFLAGS)" ./configure  \
 +	    --prefix=/etc/nginx \
 +	    --conf-path=/etc/nginx/nginx.conf \
@@ -466,14 +522,24 @@ index 1c2a2c4..50d5c89 100755
 +	    --add-module=$(MODULESDIR)/nginx-dav-ext-module \
 +	    --add-module=$(PASSENGER_GEM_DIR)/ext/nginx \
 +	    $(CONFIGURE_OPTS) >$@
++	cp debian/passenger.conf.site-available $(BUILDDIR_passenger)/passenger
++	touch $@
 +
  config.status.%:
  	echo "configuration for flavour $* not yet defined."
  
-@@ -227,8 +266,8 @@ clean:
++debian/passenger.conf:
++	echo "passenger_root $(PASSENGER_GEM_DIR)" > $@
++	echo "passenger_ruby /usr/bin/ruby" >> $@
++
+ build-arch.%: config.status.%
+ 	dh_testdir
+ 	dh_prep
+@@ -227,8 +273,9 @@ clean:
  	rm -f config.sub config.guess
  	dh_clean
  	rm -rf $(CURDIR)/debian/build-*
++	rm -f debian/passenger.conf
 +
  mime-types:
 -	
