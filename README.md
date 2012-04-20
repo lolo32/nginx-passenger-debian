@@ -4,17 +4,23 @@ This repository contains a version of nginx patched to include support for Phusi
 
 ### Build Instructions ###
 
-Make sure that Ruby is correctly set up (we recommend rvm for this task) and install the `passenger` gem. Next, check out this repository and build its Debian packages using
+Make sure that Ruby is correctly set up and install the `passenger` gem like this:
 
-    fakeroot dpkg-buildpackage
+    sudo gem install passenger
+
+Next, check out this repository and build its Debian packages using:
+
+    dpkg-buildpackage -b -rfakeroot
 
 In case, mandatory build dependencies are missing, install these using:
 
     apt-get build-dep nginx
 
-Install the resulting `nginx-passenger` and `nginx-common` .deb packages and you are done.
+Install the resulting `nginx-passenger` and `nginx-common` .deb packages located in the previous directory and you are done:
+
+    sudo dpkg -i ../nginx-passenger-1*.deb ../nginx-common*.deb
 
 ### General Information ###
 
-General documentation for nginx is available at http://nginx.org
+Documentation is available at http://nginx.org
 
