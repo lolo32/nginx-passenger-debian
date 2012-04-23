@@ -544,8 +544,8 @@ index 1c2a2c4..cf5bfe0 100755
  	echo "configuration for flavour $* not yet defined."
  
 +debian/passenger.conf:
-+	echo "passenger_root $(PASSENGER_GEM_DIR)" > $@
-+	echo "passenger_ruby /usr/bin/ruby" >> $@
++	echo "passenger_root $(PASSENGER_GEM_DIR);" > $@
++	echo "passenger_ruby /usr/bin/ruby;" >> $@
 +
  build-arch.%: config.status.%
  	dh_testdir
